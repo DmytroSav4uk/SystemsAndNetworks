@@ -1,39 +1,50 @@
 ﻿static void SortDataReversed()
 {
     string path = "../../../../Shared/data.dat";
-
-    if (!File.Exists(path))
+    using (Mutex mutex = new Mutex(false, "Global\\SharedDataMutex"))
     {
-        Console.WriteLine("Файл не знайдено: " + path);
-        return;
-    }
-
-    try
-    {
-        int[] numbers;
-
-      
-        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-        using (var br = new BinaryReader(fs))
+        if (!File.Exists(path))
         {
-            int length = (int)(fs.Length / sizeof(int));
-            numbers = new int[length];
-            for (int i = 0; i < length; i++)
-                numbers[i] = br.ReadInt32();
+            Console.WriteLine("Файл не знайдено: " + path);
+            return;
         }
 
-        
-        for (int i = 1; i < numbers.Length; i++)
+        try
         {
-            int key = numbers[i];
-            int j = i - 1;
+            mutex.WaitOne(); 
 
-            while (j >= 0 && numbers[j] < key) 
+            int[] numbers;
+            using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+            using (var br = new BinaryReader(fs))
             {
-                numbers[j + 1] = numbers[j];
-                j--;
+                int length = (int)(fs.Length / sizeof(int));
+                numbers = new int[length];
+                for (int i = 0; i < length; i++)
+                    numbers[i] = br.ReadInt32();
+            }
 
-              
+           
+            for (int i = 1; i < numbers.Length; i++)
+            {
+                int key = numbers[i];
+                int j = i - 1;
+
+                while (j >= 0 && numbers[j] < key)
+                {
+                    numbers[j + 1] = numbers[j];
+                    j--;
+
+                    using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+                    using (var bw = new BinaryWriter(fs))
+                    {
+                        foreach (var num in numbers)
+                            bw.Write(num);
+                    }
+                    Thread.Sleep(1000);
+                }
+
+                numbers[j + 1] = key;
+
                 using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
                 using (var bw = new BinaryWriter(fs))
                 {
@@ -42,22 +53,11 @@
                 }
                 Thread.Sleep(1000);
             }
-
-            numbers[j + 1] = key;
-
-           
-            using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
-            using (var bw = new BinaryWriter(fs))
-            {
-                foreach (var num in numbers)
-                    bw.Write(num);
-            }
-            Thread.Sleep(1000);
         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine("Помилка при сортуванні: " + ex.Message);
+        finally
+        {
+            mutex.ReleaseMutex();
+        }
     }
 }
 

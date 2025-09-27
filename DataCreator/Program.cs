@@ -1,21 +1,28 @@
-﻿static void randomNumbersArr()
+﻿class DataCreator
 {
-    var array = new int[30];
-    Random rnd = new Random();
-
-    for (int i = 0; i < array.Length; i++)
+    static void Main()
     {
-        array[i] = rnd.Next(10, 100);
-    }
+        string path = "../../../../Shared/data.dat";
+        Random rnd = new Random();
+        int[] numbers = new int[30];
 
-    using (var fs = new FileStream("../../../../Shared/data.dat", FileMode.Create, FileAccess.Write))
-    using (var bw = new BinaryWriter(fs))
-    {
-        foreach (var num in array)
+        for (int i = 0; i < numbers.Length; i++)
+            numbers[i] = rnd.Next(10, 100);
+
+        Mutex mutex = new Mutex(false, "Global\\SharedDataMutex");
+        mutex.WaitOne();
+        try
         {
-            bw.Write(num); 
+            using var fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+            using var bw = new BinaryWriter(fs);
+            foreach (var num in numbers)
+                bw.Write(num);
         }
+        finally
+        {
+            mutex.ReleaseMutex();
+        }
+
+        Console.WriteLine("File created.");
     }
 }
-
-randomNumbersArr();

@@ -1,55 +1,59 @@
-using System;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
-
 namespace DataVisualiser
 {
     public partial class Form1 : Form
     {
         private readonly string path = "../../../../Shared/data.dat";
         private int[] numbers = Array.Empty<int>();
+        private Mutex mutex = new Mutex(false, "Global\\SharedDataMutex");
+        private Bitmap backBuffer;
 
         public Form1()
         {
             InitializeComponent();
-            this.DoubleBuffered = true; 
-            timer1.Start(); 
+            timer1.Start();
+            this.Resize += (s, e) => RedrawBackBuffer();
         }
 
- 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-                    using (var br = new BinaryReader(fs))
-                    {
-                        int length = (int)(fs.Length / sizeof(int));
-                        numbers = new int[length];
-                        for (int i = 0; i < length; i++)
-                            numbers[i] = br.ReadInt32();
-                    }
+            if (!File.Exists(path)) return;
 
-                    panel1.Invalidate();
-                }
-            }
-            catch
+            if (mutex.WaitOne(50))
             {
-              
+                try
+                {
+                    using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+                    using var br = new BinaryReader(fs);
+                    int length = (int)(fs.Length / sizeof(int));
+                    numbers = new int[length];
+                    for (int i = 0; i < length; i++)
+                        numbers[i] = br.ReadInt32();
+                }
+                finally
+                {
+                    mutex.ReleaseMutex();
+                }
+
+                RedrawBackBuffer();
+                panel1.Invalidate();
             }
         }
 
-
-       
-        private void panel1_Paint(object sender, PaintEventArgs e)
+        private void RedrawBackBuffer()
         {
+            if (panel1.ClientSize.Width <= 0 || panel1.ClientSize.Height <= 0) return;
+
+            if (backBuffer == null || backBuffer.Width != panel1.ClientSize.Width || backBuffer.Height != panel1.ClientSize.Height)
+            {
+                backBuffer?.Dispose();
+                backBuffer = new Bitmap(panel1.ClientSize.Width, panel1.ClientSize.Height);
+            }
+
+            using Graphics g = Graphics.FromImage(backBuffer);
+            g.Clear(panel1.BackColor);
+
             if (numbers.Length == 0) return;
 
-            Graphics g = e.Graphics;
             int width = panel1.ClientSize.Width / numbers.Length;
             int max = numbers.Max();
 
@@ -61,12 +65,19 @@ namespace DataVisualiser
                 g.FillRectangle(Brushes.SkyBlue, rect);
                 g.DrawRectangle(Pens.Black, rect);
 
-             
                 string text = numbers[i].ToString();
                 SizeF size = g.MeasureString(text, this.Font);
                 g.DrawString(text, this.Font, Brushes.Black,
                     i * width + (width - size.Width) / 2,
                     panel1.ClientSize.Height - barHeight - size.Height - 22);
+            }
+        }
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+            if (backBuffer != null)
+            {
+                e.Graphics.DrawImageUnscaled(backBuffer, 0, 0);
             }
         }
     }

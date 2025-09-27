@@ -1,57 +1,72 @@
-﻿static void SortData()
+﻿namespace DataSorter
 {
-    string path = "../../../../Shared/data.dat";
-
-    if (!File.Exists(path))
+    class DataSorter
     {
-        Console.WriteLine("Файл не знайдено: " + path);
-        return;
-    }
+        static Mutex mutex = new Mutex(false, "Global\\SharedDataMutex");
 
-    try
-    {
-        int[] numbers;
-
-       
-        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-        using (var br = new BinaryReader(fs))
+        static void Main()
         {
-            int length = (int)(fs.Length / sizeof(int)); 
-            numbers = new int[length];
-            for (int i = 0; i < length; i++)
-            {
-                numbers[i] = br.ReadInt32();
-            }
+            Thread sortingThread = new Thread(SortData) { IsBackground = true };
+            sortingThread.Start();
+
+            Console.WriteLine("Sorting started. Press Enter to exit...");
+            Console.ReadLine();
         }
 
-    
-        for (int i = 0; i < numbers.Length - 1; i++)
+        static void SortData()
         {
-            for (int j = 0; j < numbers.Length - i - 1; j++)
+            string path = "../../../../Shared/data.dat";
+
+            if (!File.Exists(path))
             {
-                if (numbers[j] > numbers[j + 1])
+                Console.WriteLine("File not found.");
+                return;
+            }
+
+            int[] numbers;
+
+            mutex.WaitOne();
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+                using var br = new BinaryReader(fs);
+                int length = (int)(fs.Length / sizeof(int));
+                numbers = new int[length];
+                for (int i = 0; i < length; i++)
+                    numbers[i] = br.ReadInt32();
+            }
+            finally
+            {
+                mutex.ReleaseMutex();
+            }
+
+            for (int i = 0; i < numbers.Length - 1; i++)
+            {
+                for (int j = 0; j < numbers.Length - i - 1; j++)
                 {
-                    int temp = numbers[j];
-                    numbers[j] = numbers[j + 1];
-                    numbers[j + 1] = temp;
-
-                    
-                    using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
-                    using (var bw = new BinaryWriter(fs))
+                    if (numbers[j] > numbers[j + 1])
                     {
-                        foreach (var num in numbers)
-                            bw.Write(num);
-                    }
+                        (numbers[j], numbers[j + 1]) = (numbers[j + 1], numbers[j]);
 
-                    Thread.Sleep(1000); 
+                        mutex.WaitOne();
+                        try
+                        {
+                            using var fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+                            using var bw = new BinaryWriter(fs);
+                            foreach (var num in numbers)
+                                bw.Write(num);
+                        }
+                        finally
+                        {
+                            mutex.ReleaseMutex();
+                        }
+
+                        Thread.Sleep(1000); 
+                    }
                 }
             }
+
+            Console.WriteLine("Sorting completed.");
         }
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine("Помилка при сортуванні: " + ex.Message);
-    }
 }
-
-SortData();
