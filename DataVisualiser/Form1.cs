@@ -8,7 +8,7 @@ namespace DataVisualiser
 {
     public partial class Form1 : Form
     {
-        private readonly string path = @"C:\Users\Dmytro\RiderProjects\SystemsAndNetworks\Shared\data.dat";
+        private readonly string path = "../../../../Shared/data.dat";
         private int[] numbers = Array.Empty<int>();
 
         public Form1()

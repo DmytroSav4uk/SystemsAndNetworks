@@ -8,7 +8,7 @@
         array[i] = rnd.Next(10, 100);
     }
     
-    File.WriteAllText(@"C:\Users\Dmytro\RiderProjects\SystemsAndNetworks\Shared\data.dat", string.Join(" ", array));
+    File.WriteAllText("../../../../Shared/data.dat", string.Join(" ", array));
 }
 
 

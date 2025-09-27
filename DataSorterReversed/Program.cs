@@ -1,4 +1,4 @@
-﻿static void SortData()
+﻿static void SortDataReversed()
 {
     string path = "../../../../Shared/data.dat";
 
@@ -7,6 +7,7 @@
         Console.WriteLine("Файл не знайдено: " + path);
         return;
     }
+
     try
     {
         string content = File.ReadAllText(path);
@@ -15,22 +16,22 @@
             .Select(int.Parse)
             .ToArray();
         
-        for (int i = 0; i < numbers.Length - 1; i++)
+        for (int i = 1; i < numbers.Length; i++)
         {
-            for (int j = 0; j < numbers.Length - i - 1; j++)
+            int key = numbers[i];
+            int j = i - 1;
+            while (j >= 0 && numbers[j] < key)
             {
-                if (numbers[j] > numbers[j + 1])
-                {
-                   
-                    int temp = numbers[j];
-                    numbers[j] = numbers[j + 1];
-                    numbers[j + 1] = temp;
-                    
-                    File.WriteAllText(path, string.Join(" ", numbers));
-                    
-                    Thread.Sleep(1000);
-                }
+                numbers[j + 1] = numbers[j];
+                j--;
+                
+                File.WriteAllText(path, string.Join(" ", numbers));
+                Thread.Sleep(1000); 
             }
+            numbers[j + 1] = key;
+            
+            File.WriteAllText(path, string.Join(" ", numbers));
+            Thread.Sleep(1000);
         }
     }
     catch (Exception ex)
@@ -38,4 +39,5 @@
         Console.WriteLine("Помилка при сортуванні: " + ex.Message);
     }
 }
-SortData();
+
+SortDataReversed();
