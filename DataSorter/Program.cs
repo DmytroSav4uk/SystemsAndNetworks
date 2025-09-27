@@ -1,4 +1,6 @@
-﻿namespace DataSorter
+﻿
+
+namespace DataSorter
 {
     class DataSorter
     {
@@ -40,6 +42,9 @@
                 mutex.ReleaseMutex();
             }
 
+            Console.WriteLine("Initial array:");
+            PrintArray(numbers);
+
             for (int i = 0; i < numbers.Length - 1; i++)
             {
                 for (int j = 0; j < numbers.Length - i - 1; j++)
@@ -48,25 +53,36 @@
                     {
                         (numbers[j], numbers[j + 1]) = (numbers[j + 1], numbers[j]);
 
-                        mutex.WaitOne();
-                        try
-                        {
-                            using var fs = new FileStream(path, FileMode.Create, FileAccess.Write);
-                            using var bw = new BinaryWriter(fs);
-                            foreach (var num in numbers)
-                                bw.Write(num);
-                        }
-                        finally
-                        {
-                            mutex.ReleaseMutex();
-                        }
+                        WriteArrayToFile(numbers, path);
+                        // PrintArray(numbers);
 
-                        Thread.Sleep(1000); 
+                        Thread.Sleep(1000);
                     }
                 }
             }
 
             Console.WriteLine("Sorting completed.");
+        }
+
+        static void WriteArrayToFile(int[] numbers, string path)
+        {
+            mutex.WaitOne();
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+                using var bw = new BinaryWriter(fs);
+                foreach (var num in numbers)
+                    bw.Write(num);
+            }
+            finally
+            {
+                mutex.ReleaseMutex();
+            }
+        }
+
+        static void PrintArray(int[] numbers)
+        {
+            Console.WriteLine(string.Join(", ", numbers));
         }
     }
 }
