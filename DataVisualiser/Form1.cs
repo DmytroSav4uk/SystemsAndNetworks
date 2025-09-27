@@ -14,11 +14,11 @@ namespace DataVisualiser
         public Form1()
         {
             InitializeComponent();
-            this.DoubleBuffered = true; // уникнення мерехтіння
-            timer1.Start(); // запускаємо таймер
+            this.DoubleBuffered = true; 
+            timer1.Start(); 
         }
 
-        // Що відбувається на кожен тік таймера
+ 
         private void timer1_Tick(object sender, EventArgs e)
         {
             try
@@ -29,16 +29,16 @@ namespace DataVisualiser
                     numbers = content.Split(' ', StringSplitOptions.RemoveEmptyEntries)
                                      .Select(int.Parse)
                                      .ToArray();
-                    panel1.Invalidate(); // перемалювати panel1
+                    panel1.Invalidate();
                 }
             }
             catch
             {
-                // Якщо файл зайнятий іншою програмою – пропускаємо
+               
             }
         }
 
-        // Малюємо стовпчики
+       
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
             if (numbers.Length == 0) return;
@@ -55,7 +55,7 @@ namespace DataVisualiser
                 g.FillRectangle(Brushes.SkyBlue, rect);
                 g.DrawRectangle(Pens.Black, rect);
 
-                // Малюємо цифру зверху
+             
                 string text = numbers[i].ToString();
                 SizeF size = g.MeasureString(text, this.Font);
                 g.DrawString(text, this.Font, Brushes.Black,
