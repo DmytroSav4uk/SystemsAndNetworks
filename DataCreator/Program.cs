@@ -7,9 +7,15 @@
     {
         array[i] = rnd.Next(10, 100);
     }
-    
-    File.WriteAllText("../../../../Shared/data.dat", string.Join(" ", array));
-}
 
+    using (var fs = new FileStream("../../../../Shared/data.dat", FileMode.Create, FileAccess.Write))
+    using (var bw = new BinaryWriter(fs))
+    {
+        foreach (var num in array)
+        {
+            bw.Write(num); 
+        }
+    }
+}
 
 randomNumbersArr();

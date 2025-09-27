@@ -6,7 +6,9 @@ class ProgrammsStarter
     {
         RunProject("DataCreator");
         RunProject("DataSorter");
+        
         RunProject("DataSorterReversed");
+        
         RunProject("DataVisualiser");
     }
 

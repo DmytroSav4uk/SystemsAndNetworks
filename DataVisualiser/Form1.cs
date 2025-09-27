@@ -25,18 +25,24 @@ namespace DataVisualiser
             {
                 if (File.Exists(path))
                 {
-                    string content = File.ReadAllText(path);
-                    numbers = content.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                                     .Select(int.Parse)
-                                     .ToArray();
+                    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                    using (var br = new BinaryReader(fs))
+                    {
+                        int length = (int)(fs.Length / sizeof(int));
+                        numbers = new int[length];
+                        for (int i = 0; i < length; i++)
+                            numbers[i] = br.ReadInt32();
+                    }
+
                     panel1.Invalidate();
                 }
             }
             catch
             {
-               
+              
             }
         }
+
 
        
         private void panel1_Paint(object sender, PaintEventArgs e)
