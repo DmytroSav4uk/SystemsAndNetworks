@@ -5,14 +5,8 @@ class ProgrammsStarter
     static void Main()
     {
         RunProjectAndWait("DataCreator");
-      
-        
-        
-      
         RunProject("DataSorterReversed");
         RunProject("DataSorter");
-        
-        
         RunProject("DataVisualiser");
     }
 

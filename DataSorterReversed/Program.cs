@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Threading;
-
-namespace DataSorter
+﻿namespace DataSorter
 {
     class DataSorterReversed
     {
@@ -27,22 +23,7 @@ namespace DataSorter
                 return;
             }
 
-            int[] numbers;
-
-            mutex.WaitOne();
-            try
-            {
-                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
-                using var br = new BinaryReader(fs);
-                int length = (int)(fs.Length / sizeof(int));
-                numbers = new int[length];
-                for (int i = 0; i < length; i++)
-                    numbers[i] = br.ReadInt32();
-            }
-            finally
-            {
-                mutex.ReleaseMutex();
-            }
+            int[] numbers = ReadArrayFromFile(path);
 
             Console.WriteLine("Initial array:");
             PrintArray(numbers);
@@ -54,6 +35,9 @@ namespace DataSorter
 
                 while (j >= 0 && numbers[j] < key)
                 {
+                    
+                    numbers = ReadArrayFromFile(path);
+
                     numbers[j + 1] = numbers[j];
                     j--;
 
@@ -72,6 +56,25 @@ namespace DataSorter
             }
 
             Console.WriteLine("Reversed sorting completed.");
+        }
+
+        static int[] ReadArrayFromFile(string path)
+        {
+            mutex.WaitOne();
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+                using var br = new BinaryReader(fs);
+                int length = (int)(fs.Length / sizeof(int));
+                int[] numbers = new int[length];
+                for (int i = 0; i < length; i++)
+                    numbers[i] = br.ReadInt32();
+                return numbers;
+            }
+            finally
+            {
+                mutex.ReleaseMutex();
+            }
         }
 
         static void WriteArrayToFile(int[] numbers, string path)

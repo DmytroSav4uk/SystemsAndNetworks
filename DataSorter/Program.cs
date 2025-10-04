@@ -1,6 +1,4 @@
-﻿
-
-namespace DataSorter
+﻿namespace DataSorter
 {
     class DataSorter
     {
@@ -25,22 +23,7 @@ namespace DataSorter
                 return;
             }
 
-            int[] numbers;
-
-            mutex.WaitOne();
-            try
-            {
-                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
-                using var br = new BinaryReader(fs);
-                int length = (int)(fs.Length / sizeof(int));
-                numbers = new int[length];
-                for (int i = 0; i < length; i++)
-                    numbers[i] = br.ReadInt32();
-            }
-            finally
-            {
-                mutex.ReleaseMutex();
-            }
+            int[] numbers = ReadArrayFromFile(path);
 
             Console.WriteLine("Initial array:");
             PrintArray(numbers);
@@ -49,12 +32,14 @@ namespace DataSorter
             {
                 for (int j = 0; j < numbers.Length - i - 1; j++)
                 {
+                    numbers = ReadArrayFromFile(path);
+
                     if (numbers[j] > numbers[j + 1])
                     {
                         (numbers[j], numbers[j + 1]) = (numbers[j + 1], numbers[j]);
 
                         WriteArrayToFile(numbers, path);
-                        // PrintArray(numbers);
+                        PrintArray(numbers);
 
                         Thread.Sleep(1000);
                     }
@@ -62,6 +47,25 @@ namespace DataSorter
             }
 
             Console.WriteLine("Sorting completed.");
+        }
+
+        static int[] ReadArrayFromFile(string path)
+        {
+            mutex.WaitOne();
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+                using var br = new BinaryReader(fs);
+                int length = (int)(fs.Length / sizeof(int));
+                int[] numbers = new int[length];
+                for (int i = 0; i < length; i++)
+                    numbers[i] = br.ReadInt32();
+                return numbers;
+            }
+            finally
+            {
+                mutex.ReleaseMutex();
+            }
         }
 
         static void WriteArrayToFile(int[] numbers, string path)
